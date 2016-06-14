@@ -210,6 +210,8 @@ J.controller.prototype.receive = function(data) {
 
   } else if (input.name == 'SAVED') {
       console.log('All saved. Yahoo!');
+      $('#undo').css('opacity', '0.3');
+      $('#redo').css('opacity', '0.3');
       $('#blocker').hide();
   }
 
@@ -243,8 +245,6 @@ J.controller.prototype.update_current_action = function(value) {
 
   this._current_action = parseInt(value[0],10);
   la = parseInt(value[1],10);
-
-console.log(this._current_action +' / '+ la);
 
   $('#undo').css('opacity', '1.0'); 
   $('#redo').css('opacity', '1.0'); 
