@@ -1,14 +1,7 @@
 import os
-import sys
-import string
 import math
 import mahotas
-import PIL
-import PIL.Image
 import numpy as np
-import scipy
-import scipy.io
-# import cv2
 import h5py
 import lxml
 import lxml.etree

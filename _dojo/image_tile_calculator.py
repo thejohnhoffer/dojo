@@ -1,9 +1,6 @@
 import os
-import sys
-import string
+import cv2
 import math
-import PIL
-import PIL.Image
 import lxml
 import lxml.etree
 import glob
@@ -36,7 +33,7 @@ def run(input_dir, output_dir):
 
     for file in files:
 
-        original_image = PIL.Image.open( file )
+        original_image = cv2.imread( file )
 
 
         ( original_image_num_pixels_x, original_image_num_pixels_y ) = original_image.size
@@ -65,7 +62,7 @@ def run(input_dir, output_dir):
             mkdir_safe( current_tile_image_path )
             #mkdir_safe( current_pyramid_image_path )
 
-            current_image = original_image.resize( ( current_image_num_pixels_x, current_image_num_pixels_y ), image_resize_filter )            
+            current_image = cv2.resize(original_image, ( current_image_num_pixels_x, current_image_num_pixels_y ) )
             #current_image.save( current_pyramid_image_name )
             #print current_pyramid_image_name
             #print
@@ -81,7 +78,7 @@ def run(input_dir, output_dir):
 
                     current_tile_image_name = current_tile_image_path + os.sep + 'y=' + '%08d' % ( tile_index_y ) + ','  + 'x=' + '%08d' % ( tile_index_x ) + output_image_extension
 
-                    tile_image = current_image.crop( ( x, y, x + tile_num_pixels_x, y + tile_num_pixels_y ) )     
+                    tile_image = current_image[y:(y + tile_num_pixels_y), x:(x + tile_num_pixels_x)]
                     tile_image.save( current_tile_image_name )
                     print current_tile_image_name
                     print

@@ -1,7 +1,6 @@
 import os
 import math
-import PIL
-import PIL.Image
+import cv2
 import lxml
 import lxml.etree
 import numpy as np
@@ -19,14 +18,13 @@ class Imgo:
         output_tile_volume_file    = os.path.join(output_dir,'images/tiledVolumeDescription.xml')
 
         output_image_extension     = '.tif'
-        image_resize_filter        = PIL.Image.ANTIALIAS
 
         nimages_to_process            = shape[2]
         original_image_num_pixels_x, original_image_num_pixels_y = shape[:2]
 
         for tile_index_z in range(nimages_to_process):
 
-            original_image = PIL.Image.fromarray(img[:,:,tile_index_z])
+            original_image = img[:,:,tile_index_z]
 
             current_image_num_pixels_y = original_image_num_pixels_y
             current_image_num_pixels_x = original_image_num_pixels_x
@@ -40,7 +38,7 @@ class Imgo:
 
                 self.mkdir_safe( current_tile_image_path )
 
-                current_image = original_image.resize( ( current_image_num_pixels_x, current_image_num_pixels_y ), image_resize_filter )
+                current_image = cv2.resize(original_image, ( current_image_num_pixels_x, current_image_num_pixels_y ) )
 
                 num_tiles_y = int( math.ceil( float( current_image_num_pixels_y ) / tile_num_pixels_y ) )
                 num_tiles_x = int( math.ceil( float( current_image_num_pixels_x ) / tile_num_pixels_x ) )
@@ -53,8 +51,8 @@ class Imgo:
 
                         current_tile_image_name = current_tile_image_path + os.sep + 'y=' + '%08d' % ( tile_index_y ) + ','  + 'x=' + '%08d' % ( tile_index_x ) + output_image_extension
 
-                        tile_image = current_image.crop( ( x, y, x + tile_num_pixels_x, y + tile_num_pixels_y ) )
-                        tile_image.save( current_tile_image_name )
+                        tile_image = current_image[y:(y + tile_num_pixels_y), x:(x + tile_num_pixels_x)]
+                        cv2.imwrite(current_tile_image_name, tile_image)
                         print current_tile_image_name
                         print
 

@@ -10,7 +10,6 @@ import math
 import shutil
 from scipy import ndimage
 from skimage import exposure
-from PIL import Image as PILImage
 
 class Controller(object):
 
@@ -814,7 +813,7 @@ class Controller(object):
         # If extra dictionary for image data
         if len(dicts) > 1:
           img = 'y='+str(y).zfill(8)+',x='+str(x).zfill(8)+'.'+self.__dojoserver.get_image().get_input_format()
-          dicts[-1][x][y] = np.array(PILImage.open(os.path.join(self.data_path,img)))
+          dicts[-1][x][y] = cv2.imread(os.path.join(self.data_path,img))
         # Always get segmentation data
         seg = 'y='+str(y).zfill(8)+',x='+str(x).zfill(8)+'.'+self.__dojoserver.get_segmentation().get_input_format()
 

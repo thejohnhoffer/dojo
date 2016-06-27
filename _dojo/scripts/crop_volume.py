@@ -1,7 +1,6 @@
 import os
+import cv2
 import tifffile as tif
-import mahotas
-from PIL import Image as PILImage
 import numpy
 import sqlite3
 
@@ -15,9 +14,7 @@ def crop_volume(dir, outdir, x, y, w, h):
         if (f.startswith('.')):
             continue
 
-        i = PILImage.open(os.path.join(dir,f))
-        # i = tif.imread(os.path.join(dir,f))
-        i = numpy.array(i)
+        i = cv2.imread(os.path.join(dir,f))
         cropped = i[y:y+h,x:x+w]
 
         tif.imsave(os.path.join(outdir,f+'.tif'), cropped)

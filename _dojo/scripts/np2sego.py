@@ -1,6 +1,5 @@
 import os
 import math
-import mahotas
 import numpy as np
 import h5py
 import lxml
@@ -44,12 +43,6 @@ class Sego:
 
             print file_path
             print
-
-        def load_id_image ( file_path ):
-            print file_path
-            ids = np.int32( np.array( mahotas.imread( file_path ) ) )
-
-            return ids
 
         def sbdm_string_hash( in_string ):
             hash = 0
