@@ -103,6 +103,9 @@ J.viewer.prototype.init = function(callback) {
 
     this._interactor = new J.interactor(this);
 
+    // see caching
+    this.start_see_cache();
+
     this._image_buffer.width = this._overlay_buffer.width = this._pt_buff.width = this._image.width;
     this._image_buffer.height = this._overlay_buffer.height = this._pt_buff.height = this._image.height;
 
@@ -110,7 +113,6 @@ J.viewer.prototype.init = function(callback) {
 
       this._segmentation = JSON.parse(res.response);
 
-      // TODO support if we don't have a segmentation
       this._loader.load_json('/segmentation/colormap', function(res) {
 
         this._colormap = JSON.parse(res.response);
@@ -119,7 +121,7 @@ J.viewer.prototype.init = function(callback) {
 
         var pos = 0;
         for (var i=0; i<this._max_colors; i++) {
-          
+
           var c = this._colormap[i];
 
           this._gl_colormap[pos++] = c[0];
@@ -157,7 +159,7 @@ J.viewer.prototype.calc_zoomlevels = function() {
   var _height = this._image.height/2;
 
   for (var w=1; w<this._image.zoomlevel_count; w++) {
-    
+
     var level_x_count = Math.ceil(_width / 512);
     var level_y_count = Math.ceil(_height / 512);
 
@@ -196,7 +198,7 @@ J.viewer.prototype.draw_image = function(x,y,z,w,i,s) {
 J.viewer.prototype.draw_webgl = function(x,y,z,w,i,s) {
 
   // draw image and segmentation
-  this._offscreen_renderer.draw(i, s, this._image_buffer_context, x, y);  
+  this._offscreen_renderer.draw(i, s, this._image_buffer_context, x, y);
 
 };
 
@@ -259,7 +261,7 @@ J.viewer.prototype.draw_canvas = function(x,y,z,w,i,s) {
 
         pixel_data_data[pos++] = color[0];
         pixel_data_data[pos++] = color[1];
-        pixel_data_data[pos++] = color[2];        
+        pixel_data_data[pos++] = color[2];
         pixel_data_data[pos++] = 0.3*255;
 
       }
@@ -268,14 +270,14 @@ J.viewer.prototype.draw_canvas = function(x,y,z,w,i,s) {
 
       pixel_data_data[pos++] = 0;
       pixel_data_data[pos++] = 0;
-      pixel_data_data[pos++] = 0;        
+      pixel_data_data[pos++] = 0;
       pixel_data_data[pos++] = 0;
 
     } else if (split_mode > 0 && id == activated_id) {
 
       pixel_data_data[pos++] = 0;
       pixel_data_data[pos++] = 0;
-      pixel_data_data[pos++] = 0;        
+      pixel_data_data[pos++] = 0;
       pixel_data_data[pos++] = 0;
 
     } else {
@@ -286,13 +288,13 @@ J.viewer.prototype.draw_canvas = function(x,y,z,w,i,s) {
 
       if (id == highlighted_id || id == activated_id) {
         pixel_data_data[pos++] = 200;
-      } else {    
+      } else {
         pixel_data_data[pos++] = opacity;
       }
 
     }
 
-  }  
+  }
 
   this._segmentation_buffer_context.putImageData(pixel_data, 0, 0);
   this._image_buffer_context.drawImage(this._segmentation_buffer,0,0,512,512,x*512,y*512,512,512);
@@ -421,12 +423,33 @@ J.viewer.prototype.render = function() {
     this.clear();
     // put image buffer
     this._context.drawImage(this._image_buffer, 0, 0);
-    
+
     // draw overlays
     this._context.drawImage(this._overlay_buffer,0,0);
 
     // draw mouse pointer
     this._context.drawImage(this._pt_buff,0,0);
+
+    // draw cache map
+    var cached_img = this._loader._image_cache[this._camera._z];
+
+    if (cached_img) {
+      for (i in this.cache_buffer) {
+        buffered = this.cache_buffer[i];
+        this.cache_context[i].clearRect(0, 0, buffered.width, buffered.height);
+        this.cache_context[i].fillStyle="#01665E";
+        if (!cached_img[i]) continue;
+        for (x in cached_img[i]) {
+          if (!cached_img[i][x]) continue;
+          for (y in cached_img[i][x]) {
+            if (!cached_img[i][x][y]) continue;
+            this.cache_context[i].fillRect(x,y,1,1);
+            console.log('that');
+          }
+        }
+        this.cache_context[i].drawImage(buffered,0,0);
+       }
+     }
 
     this._force_rerender = false;
   }
@@ -466,7 +489,7 @@ J.viewer.prototype.xy2ij = function(x, y) {
     return [-1, -1];
   }
 
-  var i_j = [Math.floor(((u_v[0]/this._image.zoom_levels[this._camera._w][2])*this._image.zoom_levels[0][2])/this._camera._view[0]), 
+  var i_j = [Math.floor(((u_v[0]/this._image.zoom_levels[this._camera._w][2])*this._image.zoom_levels[0][2])/this._camera._view[0]),
              Math.floor(((u_v[1]/this._image.zoom_levels[this._camera._w][3])*this._image.zoom_levels[0][3])/this._camera._view[4])];
 
   return i_j;
@@ -477,7 +500,7 @@ J.viewer.prototype.ij2xy = function(i, j) {
 
   var u = ((i * this._camera._view[0])/this._image.zoom_levels[0][2]) * this._image.zoom_levels[this._camera._w][2];
   var v = ((j * this._camera._view[4])/this._image.zoom_levels[0][3]) * this._image.zoom_levels[this._camera._w][3];
-   
+
 
   return this.uv2xy(u, v);
 
@@ -488,7 +511,7 @@ J.viewer.prototype.ij2uv = function(i, j) {
   var u = ((i * this._camera._view[0])/this._image.zoom_levels[0][2]) * this._image.zoom_levels[this._camera._w][2];
   var v = ((j * this._camera._view[4])/this._image.zoom_levels[0][3]) * this._image.zoom_levels[this._camera._w][3];
 
-  return [u,v];   
+  return [u,v];
 
 };
 
@@ -497,7 +520,7 @@ J.viewer.prototype.ij2uv_no_zoom = function(i, j) {
   var u = ((i)/this._image.zoom_levels[0][2]) * this._image.zoom_levels[this._camera._w][2];
   var v = ((j)/this._image.zoom_levels[0][3]) * this._image.zoom_levels[this._camera._w][3];
 
-  return [u,v];   
+  return [u,v];
 
 };
 
@@ -537,7 +560,7 @@ J.viewer.prototype.get_segmentation_id = function(i, j, callback) {
   var y = Math.floor(j / 512);
   var z = this._camera._z;
   var w = 0;
-  
+
   this._loader.get_segmentation(x, y, z, w, function(s) {
 
     var pixel_data = new Uint32Array(s.buffer);
@@ -556,7 +579,7 @@ J.viewer.prototype.get_segmentation_id_before_merge = function(i, j, callback) {
   var y = Math.floor(j / 512);
   var z = this._camera._z;
   var w = 0;
-  
+
   this._loader.get_segmentation(x, y, z, w, function(s) {
 
     var pixel_data = new Uint32Array(s.buffer);
@@ -571,4 +594,28 @@ J.viewer.prototype.get_segmentation_id_before_merge = function(i, j, callback) {
 
 J.viewer.prototype.is_locked = function(id) {
   return this._controller.is_locked(id);
+};
+
+J.viewer.prototype.start_see_cache = function() {
+  this.cache_context = [];
+  this.cache_buffer = [];
+  spacer = 5;
+  topper = 20;
+  righter = 10;
+  sizer = (window.innerHeight-2*topper)/this._image.zoomlevel_count;
+  sizer = Math.min(sizer - spacer,200);
+  for (i = 0; i < this._image.zoomlevel_count; i++){
+    this.cache_buffer[i] = document.createElement('canvas');
+    this.cache_buffer[i].style['image-rendering'] = 'pixelated';
+    this.cache_buffer[i].style.background = 'black';
+    this.cache_buffer[i].style.position = 'absolute';
+    this.cache_buffer[i].style.top = topper+(sizer+spacer)*i;
+    this.cache_buffer[i].style.right = righter;
+    this.cache_buffer[i].style.height = sizer;
+    this.cache_buffer[i].style.width = sizer;
+    this.cache_buffer[i].height = this._image.zoom_levels[i][0];
+    this.cache_buffer[i].width = this._image.zoom_levels[i][0];
+    this.cache_context[i] = this.cache_buffer[i].getContext('2d');
+    this._container.appendChild(this.cache_buffer[i]);
+  }
 };
